@@ -1,0 +1,12 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Clock app pro",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Clock",
+  "start_url": "https://chowdhuryabhi870-svg.github.io/Clock-pro-2/",
+  "theme_color": "#ffffff",
+  "description": "Best click app"
+}
