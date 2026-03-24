@@ -511,10 +511,8 @@ border-color:var(--primary);
                         <button class="mode-btn" onclick="activateNightMode()" style="background:#1A1C22; color:#FF5252; border-color:#33363F;">
                             <span class="material-icons-round" style="font-size:16px;">dark_mode</span> Night
                         </button>
-    <button onclick="showNotification('Test','This is a test notification')" 
-style="padding:10px; margin-top:10px;">
-Test Notification
-    </button>
+                        <button onclick="enableNotification()">Enable Notification</button>
+
                     </div>
                     <input type="text" id="text-alarm-input" 
 placeholder="Type: set alarm 7 am for stydy  mon"
@@ -694,6 +692,13 @@ style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--outl
     <audio id="alarm-sound" loop preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/1005/1005-preview.mp3"></audio>
 
     <script>
+        function enableNotification(){
+    if ("Notification" in window) {
+        Notification.requestPermission().then(permission => {
+            alert("Permission: " + permission);
+        });
+    }
+        }
 if ("Notification" in window) {
     Notification.requestPermission().then(p => {
         console.log("Permission:", p);
