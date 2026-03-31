@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jarvis Pro</title>
+<style>
+/* HUD GRID */
+.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hud::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(#00ff9f22 1px, transparent 1px),
+    linear-gradient(90deg, #00ff9f22 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* CORNER LINES */
+.corner {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 2px solid #00ff9f;
+}
+
+.top-left { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+.top-right { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+.bottom-left { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+.bottom-right { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+body {
+  background: black;
+  color: #00ff9f;
+  font-family: monospace;
+  text-align: center;
+}
+
+/* TITLE */
+.title {
+  text-shadow: 0 0 10px #00ff9f;
+  letter-spacing: 2px;
+}
+
+/* JARVIS CORE */
+.circle {
+  width: 160px;
+  height: 160px;
+  border: 2px solid #00ff9f;
+  border-radius: 50%;
+  margin: 20px auto;
+  box-shadow: 0 0 20px #00ff9f;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 10px #00ff9f; }
+  50% { box-shadow: 0 0 35px #00ff9f; }
+  100% { box-shadow: 0 0 10px #00ff9f; }
+}
+
+/* BUTTON */
+button {
+  padding: 10px 20px;
+  background: black;
+  color: #00ff9f;
+  border: 1px solid #00ff9f;
+  border-radius: 8px;
+  margin: 10px;
+  box-shadow: 0 0 10px #00ff9f;
+}
+
+/* CHAT BOX */
+#chat {
+  height: 300px;
+  width: 95%;
+  margin: 20px auto;
+  border: 1px solid #00ff9f;
+  border-radius: 10px;
+  padding: 10px;
+  overflow-y: auto;
+  text-align: left;
+  background: rgba(0, 255, 159, 0.05);
+  box-shadow: 0 0 15px #00ff9f inset;
+}
+
+/* CHAT TEXT */
+#chat div {
+  margin: 5px 0;
+  padding: 5px;
+  border-left: 2px solid #00ff9f;
+  padding-left: 10px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* USER TEXT */
+.user {
+  color: #00bfff;
+}
+
+/* JARVIS TEXT */
+.jarvis {
+  color: #00ff9f;
+}
+
+/* ANIMATION */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* SCROLLBAR */
+#chat::-webkit-scrollbar {
+  width: 5px;
+}
+#chat::-webkit-scrollbar-thumb {
+  background: #00ff9f;
+}
+</style>
+</head>
+
+<body>
+
+<h1 class="title">🤖 JARVIS TERMINAL</h1>
+<div class="hud">
+  <div class="corner top-left"></div>
+  <div class="corner top-right"></div>
+  <div class="corner bottom-left"></div>
+  <div class="corner bottom-right"></div>
+</div>
+<div class="circle"></div>
+
+<button onclick="startJarvis()">🚀 Activate</button>
+
+<div id="chat"></div>
+
+<script>
+  function playSongInChat(song){
+
+  let div = document.createElement("div");
+  div.className = "jarvis";
+
+  div.innerHTML = `
+    <div style="border:1px solid #00ff9f;padding:10px;border-radius:10px;">
+      🎵 Playing: ${song}<br><br>
+
+      <iframe 
+        width="100%" 
+        height="200"
+        src="https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(song)}"
+        frameborder="0"
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+
+    </div>
+  `;
+
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+  function playBeep(){
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let osc = ctx.createOscillator();
+  let gain = ctx.createGain();
+
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(800, ctx.currentTime);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start();
+  gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.3);
+}
+const chat = document.getElementById("chat");
+
+let isSpeaking = false;
+
+// 🔊 SPEAK (IMPORTANT FIX)
+function typeText(text, callback){
+  let i = 0;
+  let div = document.createElement("div");
+  div.className = "jarvis";
+  chat.appendChild(div);
+
+  function typing(){
+    if(i < text.length){
+      div.innerHTML += text.charAt(i);
+      i++;
+      setTimeout(typing, 20);
+    } else {
+      if(callback) callback();
+    }
+  }
+  typing();
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// 🔊 SPEAK + TYPE
+function speak(text){
+  isSpeaking = true;
+
+  playBeep(); // 🔊 ADD THIS
+
+  recognition.stop();
+
+  let speech = new SpeechSynthesisUtterance(text);
+
+  if(/[অ-হ]/.test(text)){
+    speech.lang = "bn-BD";
+  } else {
+    speech.lang = "en-IN";
+  }
+
+  speech.onend = () => {
+    isSpeaking = false; // ADD THIS
+    startListening();
+  };
+
+  window.speechSynthesis.speak(speech);
+  addChat("🤖 Jarvis: " + text, "jarvis");
+}
+// 💬 CHAT
+function addChat(text, type){
+  let div = document.createElement("div");
+  div.className = type;
+  div.innerText = text;
+
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// 🎤 VOICE
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = new SpeechRecognition();
+recognition.lang = "en-IN"; // Bangla + mix better
+
+// START
+function startJarvis(){
+  speak("Hello Boss, Jarvis activated");
+}
+// 🎧 LISTEN
+function startListening(){
+  if(isSpeaking) return; // safety
+
+  try {
+    recognition.start();
+  } catch(e){}
+
+  recognition.onresult = function(event){
+    let cmd = event.results[0][0].transcript.toLowerCase();
+    addChat("🧑 You: " + cmd);
+
+    recognition.stop(); // 🔴 mic OFF after user speak
+    handleCommand(cmd);
+  };
+}
+
+// 🧠 COMMAND
+async function handleCommand(cmd){
+ console.log("CMD:", cmd);
+  cmd = cmd.toLowerCase().trim();
+
+  // 🟢 HIGH PRIORITY (FAST SYSTEM COMMANDS)
+
+  if(match(["time","tim","taim","somoy","shomoy"], cmd)){
+  let t = new Date().toLocaleTimeString();
+  speak("Ekhon somoy " + t);
+  return;
+}
+
+  if(match(["date","tarikh","tarik"], cmd)){
+  let d = new Date().toDateString();
+  speak("Aajker tarikh " + d);
+  return;
+}
+
+  
+
+  if(cmd.includes("weather") || cmd.includes("abohawa")){
+  getLocationWeather();
+  return;
+}
+if(cmd.startsWith("play") || cmd.startsWith("gaan") || cmd.startsWith("song")){
+  
+  let song = cmd.replace(/play|gaan|song/g,"").trim();
+
+  if(song){
+    speak("Playing " + song);
+
+    // 🔥 ONLY THIS (NO window.open)
+    playSongInChat(song);
+  } else {
+    speak("Kon gaan bolbe?");
+  }
+
+  return;
+}
+
+  if(cmd === "open youtube" || cmd === "youtube kholo"){
+  speak("Opening YouTube");
+  window.open("https://youtube.com");
+  return;
+}
+  if(match(["where am i","where i am","my location","current location","ami kothai","kothai achi"], cmd)){
+  getFullLocation();
+  return;
+}
+  if(cmd.startsWith("search")){
+  let q = cmd.replace("search","").trim();
+
+  speak("Searching " + q);
+  window.open("https://google.com/search?q=" + encodeURIComponent(q));
+  return;
+}
+
+  // 🔵 MEMORY (OPTIONAL)
+  if(cmd.includes("my name is")){
+    let name = cmd.replace("my name is","").trim();
+    localStorage.setItem("name", name);
+    speak("I will remember you " + name);
+    return;
+  }
+
+  // 🔴 LOW PRIORITY (AI FALLBACK)
+  return askAI(cmd);
+}
+async function askAI(cmd){
+
+  // 📴 OFFLINE CHECK
+  if(!navigator.onLine){
+    let reply = offlineReply(cmd);
+    if(reply){
+      speak(reply);
+    } else {
+      speak("No internet connection");
+    }
+    return;
+  }
+
+  speak("Thinking...");
+
+  try {
+    let res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer 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",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "stepfun/step-3.5-flash:free",
+        messages: [{role:"user", content: cmd}]
+      })
+    });
+
+    let data = await res.json();
+    let reply = data.choices?.[0]?.message?.content || "No answer";
+
+    speak(reply);
+
+  } catch(e){
+    speak("AI error, using offline mode");
+
+    let reply = offlineReply(cmd);
+    speak(reply || "I cannot answer that now");
+  }
+}
+function offlineReply(cmd){
+
+  if(cmd.includes("hello") || cmd.includes("hi")){
+    return "Hello Boss";
+  }
+
+  if(cmd.includes("how are you")){
+    return "I am fine Boss";
+  }
+
+  if(cmd.includes("who are you")){
+    return "I am your Jarvis assistant";
+  }
+
+  return null;
+}
+// 🧠 SMART MATCH FUNCTION
+function match(words, cmd){
+  return words.some(word => cmd.includes(word));
+}
+async function getLocationWeather(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(async pos => {
+
+      let lat = pos.coords.latitude;
+      let lon = pos.coords.longitude;
+
+      let locationName = await getExactLocation(lat, lon);
+
+      try{
+        let res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=1ef8725065b14e0db689c26ceb28904f`
+        );
+
+        let data = await res.json();
+
+        let temp = data.main.temp;
+        let condition = data.weather[0].description;
+
+        speak(`You are in ${locationName}. Temperature is ${temp} degree Celsius with ${condition}`);
+
+        // 👇 UI CARD SHOW
+        showWeatherCard(temp, condition, locationName);
+
+      } catch(e){
+        speak("Weather fetch error");
+      }
+
+    });
+  }
+}
+async function getExactLocation(lat, lon){
+  try{
+    let res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+    let data = await res.json();
+
+    return data.address.suburb || data.address.city || data.address.town || "your area";
+
+  } catch(e){
+    return "your location";
+  }
+}
+function showWeatherCard(temp, condition, location){
+  let div = document.createElement("div");
+
+  div.style.border = "1px solid #00ff9f";
+  div.style.padding = "10px";
+  div.style.marginTop = "10px";
+  div.style.borderRadius = "10px";
+  div.style.boxShadow = "0 0 10px #00ff9f";
+  div.innerHTML = `
+    🌦️ <b>Weather Report</b><br>
+    📍 ${location}<br>
+    🌡️ Temp: ${temp}°C<br>
+    ☁️ ${condition}
+  `;
+
+  chat.appendChild(div);
+}
+async function getFullLocation(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(async pos => {
+
+      let lat = pos.coords.latitude;
+      let lon = pos.coords.longitude;
+
+      try{
+        let res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+        let data = await res.json();
+
+        let area = data.address.suburb || data.address.neighbourhood || "";
+        let city = data.address.city || data.address.town || data.address.village || "";
+        let state = data.address.state || "";
+        let country = data.address.country || "";
+
+        let fullLocation = `${area}, ${city}, ${state}, ${country}`;
+
+        speak("You are currently in " + fullLocation);
+
+      } catch(e){
+        speak("I cannot detect your location properly");
+      }
+
+    });
+  } else {
+    speak("Location not supported");
+  }
+}
+</script>
+</body>
+</html>
