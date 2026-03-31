@@ -149,16 +149,17 @@ button {
   let API_KEY = "AIzaSyA3LkuriKSK2Dzcg6ovd-ZyjqyZCPtwWoE";
 
   try{
-    // 🔍 Search video
+
+    let query = song + " official song";
+
     let res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(song)}&key=${API_KEY}&maxResults=1&type=video`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=1&type=video&videoCategoryId=10`
     );
 
     let data = await res.json();
 
     let videoId = data.items[0].id.videoId;
 
-    // 🎵 Create player
     let div = document.createElement("div");
     div.className = "jarvis";
 
@@ -169,7 +170,7 @@ button {
         <iframe 
           width="100%" 
           height="200"
-          src="https://www.youtube.com/embed/${videoId}?autoplay=1"
+          src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1"
           frameborder="0"
           allow="autoplay; encrypted-media"
           allowfullscreen>
@@ -182,7 +183,7 @@ button {
     chat.scrollTop = chat.scrollHeight;
 
   } catch(e){
-    speak("Cannot play this song");
+    speak("Song play korte problem hocche");
   }
   }
   function playBeep(){
@@ -308,12 +309,16 @@ async function handleCommand(cmd){
   getLocationWeather();
   return;
 }
-if(cmd.startsWith("play")){
-  let song = cmd.replace("play","").trim();
+// 🎵 SONG COMMAND (HIGH PRIORITY)
+if(cmd.startsWith("play") || cmd.startsWith("gaan") || cmd.startsWith("song")){
+  
+  let song = cmd.replace(/play|gaan|song/g,"").trim();
 
   if(song){
     speak("Playing " + song);
     playSongInChat(song);
+  } else {
+    speak("Kon gaan bolbe?");
   }
 
   return;
@@ -323,7 +328,7 @@ if(cmd.startsWith("play")){
   speak("Opening YouTube");
   window.open("https://youtube.com");
   return;
-}
+  }
   if(match(["where am i","where i am","my location","current location","ami kothai","kothai achi"], cmd)){
   getFullLocation();
   return;
@@ -334,7 +339,7 @@ if(cmd.startsWith("play")){
   speak("Searching " + q);
   window.open("https://google.com/search?q=" + encodeURIComponent(q));
   return;
-}
+  }
 
   // 🔵 MEMORY (OPTIONAL)
   if(cmd.includes("my name is")){
